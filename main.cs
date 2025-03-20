@@ -221,14 +221,17 @@ class BodyManager
         {
             throw new ArgumentException("Turniej bez członków");
         }
-
-        Random rnd = new Random();
+        else if(this.Bodies.Count * sizeintour < numberoftour)
+        {
+            throw new ArgumentException("Wiecej turniejów niż mozliwych członków");
+        }
+            Random rnd = new Random();
         List<Body> Winners = new List<Body>();
         for (int i = 0; i < numberoftour; i++)
         {
             rnd = new Random();
             List<Body> tour = new List<Body>();
-            while(tour.Count< sizeintour || tour.Count >= this.Bodies.Count)
+            while(tour.Count< sizeintour && tour.Count < this.Bodies.Count)
             {
                 var numberrandind = rnd.Next(0, this.Bodies.Count);
                 Body Potencjal = (this.Bodies[numberrandind]);
@@ -264,9 +267,19 @@ class BodyManager
             addBodies(body);
         }
     }
-    public void starttour()
+    public void starttour(int sizeoftour=2,int numberoftours=10)
     {
         this.Bodies = this.Tournament();
+    }
+    public void selectbybest(int numberofbest = 3)
+    {
+        if(this.Bodies.Count < numberofbest)
+        {
+            throw new Exception("Error za duzo wybierasz najlepszych mniej niz jest bodies");
+        }
+        List<Body>bests = new List<Body>();
+        bests = this.Bodies.OrderByDescending(obj=>obj.getResult()).Take(numberofbest).ToList(); //Sortuj + bierz 3 pierwsze
+        this.Bodies = bests;
     }
 
 }
@@ -276,18 +289,22 @@ class Program
 
     static void Main()
     {
-        var test = new BodyManager(15);
+        var test = new BodyManager(4);
         Console.WriteLine("Wygenerowane Organizmy");
         test.showBodies();
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 99; i++)
         {
+
             Console.WriteLine("Mixing");
             test.getmixeach();
             test.showBodies();
             Console.WriteLine("Po turnieju");
-            test.starttour();
+            test.starttour(2, 5);
+            //test.selectbybest(10);
             test.showBodies();
         }
+        Console.WriteLine("Wynik Ostateczny");
+        test.showBodies();
 
     }
 }
