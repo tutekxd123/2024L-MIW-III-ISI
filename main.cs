@@ -47,7 +47,7 @@ class Chrom
     {
         Random rnd = new Random();
         int randomnumhappen = rnd.Next(0, 15);
-        if(randomnumhappen!=4)
+        if (randomnumhappen != 4)
         {
             return; //Losowa szansa na mutacje 1/15? jezeli nie wypadnie 4 to nie mutujemy nic
         }
@@ -61,14 +61,14 @@ class Chrom
         {
             array[randomnum] = '0';
         }
-        Console.WriteLine("Mutation!");
+        //Console.WriteLine("Mutation!");
         this.value = new string(array);
     }
     public double getResult()
     {
-        double number = (3 / (Math.Pow(2,this.value.Length)-1)); //cast to double int always = 0
+        double number = (3 / (Math.Pow(2, this.value.Length) - 1)); //cast to double int always = 0
 
-        double result = (double)Convert.ToInt16(this.value, 2)*number;
+        double result = (double)Convert.ToInt16(this.value, 2) * number;
         result = result - 2;
         return result;
     }
@@ -88,20 +88,20 @@ class Param
     public Param Mix(Param other)
     {
         Param result = new Param(this.Chroms.Count);
-        if(this.Chroms.Count != other.Chroms.Count)
+        if (this.Chroms.Count != other.Chroms.Count)
         {
             throw new ArgumentException("Liczba Chromosomow nie zgadza się");
         }
-        for(int i = 0; i < Chroms.Count; i++)
+        for (int i = 0; i < Chroms.Count; i++)
         {
             result.Chroms[i] = this.Chroms[i].GetMix(other.Chroms[i]);
         }
         return result;
     }
-    public Param(int sizechrom=4)
+    public Param(int sizechrom = 4)
     {
         Chroms = new List<Chrom>();
-        for(int i = 0; i < sizechrom; i++)
+        for (int i = 0; i < sizechrom; i++)
         {
             Chroms.Add(new Chrom());
         }
@@ -109,7 +109,7 @@ class Param
     public double getResult()
     {
         double result = 0;
-        for(int i = 0; i < Chroms.Count; i++)
+        for (int i = 0; i < Chroms.Count; i++)
         {
             result += Chroms[i].getResult();
         }
@@ -134,10 +134,10 @@ class Body
             Params.Add(new Param(row));
         }
     }
-    public Body(int sizeparams=4,int sizechrom=4)
+    public Body(int sizeparams = 4, int sizechrom = 4)
     {
         Params = new List<Param>();
-        for(int i = 0; i < sizeparams; i++)
+        for (int i = 0; i < sizeparams; i++)
         {
             Params.Add(new Param(sizechrom));
         }
@@ -150,18 +150,18 @@ class Body
         {
             result += Params[i].getResult();
         }
-        return Math.Round((result / Params.Count),3);
+        return Math.Round((result / Params.Count), 3);
     }
     public Body mixBody(Body otherbody)
-    {   
+    {
         Body result = new Body(this.getLengthParams(), this.getLengthChrom());
         List<Param> NewParms = new List<Param>();
-        if(this.Params.Count != otherbody.getLengthParams())
+        if (this.Params.Count != otherbody.getLengthParams())
         {
             throw new ArgumentException("Organizmy innych gatunkow nie mieszają się");
         }
 
-        for(int i = 0; i < this.Params.Count; i++)
+        for (int i = 0; i < this.Params.Count; i++)
         {
             NewParms.Add(this.Params[i].Mix(otherbody.Params[i]));
         }
@@ -186,10 +186,10 @@ class Body
 
 class BodyManager
 {
-    public List<Body>Bodies=new List<Body>();
+    public List<Body> Bodies = new List<Body>();
     public BodyManager(int sizefamily = 5)
     {
-        for(int i=0; i < sizefamily; i++)
+        for (int i = 0; i < sizefamily; i++)
         {
             Bodies.Add(new Body());
         }
@@ -203,7 +203,14 @@ class BodyManager
     {
         this.Bodies.Add(somebody);
     }
-    public List<Body> Tournament(int sizeintour=2, int numberoftour=2)
+    public void showBodies()
+    {
+        for (int i = 0; i < Bodies.Count; i++)
+        {
+            Console.WriteLine("Body: {0} Result: {1}", i, Bodies[i].getResult());
+        }
+    }
+    private List<Body> Tournament(int sizeintour = 2, int numberoftour = 10)
     {
         if (this.Bodies.Count == 1)
         {
@@ -216,23 +223,51 @@ class BodyManager
         }
 
         Random rnd = new Random();
-        for(int i = 0; i < numberoftour; i++)
+        List<Body> Winners = new List<Body>();
+        for (int i = 0; i < numberoftour; i++)
         {
+            rnd = new Random();
             List<Body> tour = new List<Body>();
-            for(int j = 0; j < sizeintour; j++)
+            while(tour.Count< sizeintour || tour.Count >= this.Bodies.Count)
             {
-                Body Potencjal = (this.Bodies[rnd.Next(0, this.Bodies.Count)]);
+                var numberrandind = rnd.Next(0, this.Bodies.Count);
+                Body Potencjal = (this.Bodies[numberrandind]);
+                if (!tour.Contains(Potencjal) && !Winners.Contains(Potencjal)) //unikalni zwyciezcy
+                {
+                    tour.Add(Potencjal);
+                }
 
-                //Dobra end na dzisiaj :D
-                //Tutaj trzeba zabezpieczyc ze turniej zeby nie mogl sam ze soba w turnieju
             }
-
+            if (tour.Any())
+            {
+                Winners.Add(tour.MaxBy(element => element.getResult()) ?? tour[0]); //Warning jezeli null Maxby to daj pierwszy element
+            }
+             
         }
-        var test = rnd.Next(0, this.Bodies.Count);
-
-        return Bodies;
+        return Winners;
     }
-
+    public void getmixeach()
+    {
+        List<Body> toAdd=new List<Body>();
+        for (int i = 0; i < this.Bodies.Count; i++)
+        {
+            for(int j=0;j<this.Bodies.Count; j++)
+            {
+                if (this.Bodies[i] != this.Bodies[j])
+                {
+                    toAdd.Add(this.Bodies[i].mixBody(this.Bodies[j]));
+                }
+            }
+        }
+        foreach (Body body in toAdd)
+        {
+            addBodies(body);
+        }
+    }
+    public void starttour()
+    {
+        this.Bodies = this.Tournament();
+    }
 
 }
 
@@ -241,15 +276,18 @@ class Program
 
     static void Main()
     {
+        var test = new BodyManager(15);
+        Console.WriteLine("Wygenerowane Organizmy");
+        test.showBodies();
+        for (int i = 0; i < 5; i++)
+        {
+            Console.WriteLine("Mixing");
+            test.getmixeach();
+            test.showBodies();
+            Console.WriteLine("Po turnieju");
+            test.starttour();
+            test.showBodies();
+        }
 
-        Body testboy = new Body();
-        Body test2girl = new Body();
-        Body kid = testboy.mixBody(test2girl);
-        Body kid2 = testboy.mixBody(test2girl);
-        Console.WriteLine(testboy.getResult());
-        Console.WriteLine(test2girl.getResult());
-        Console.WriteLine(kid.getResult());
-        Console.WriteLine(kid2.getResult());
-        Console.WriteLine("OK!");
     }
 }
