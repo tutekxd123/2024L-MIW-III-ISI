@@ -1,5 +1,11 @@
 
-class Chrom
+using System.Collections.Generic;
+
+class RandomNumber
+{
+    public static readonly Random rnd = new Random();
+}
+class Chrom : ICloneable
 {
     private string value = "";
     public string getValue()
@@ -12,11 +18,10 @@ class Chrom
     }
     public Chrom(int size = 4)
     {
-        Random rnd = new Random();
         string tempvalue = "";
         for (int i = 0; i < size; i++)
         {
-            tempvalue += rnd.Next(0, 2);
+            tempvalue += RandomNumber.rnd.Next(0, 2);
         }
         this.value = tempvalue;
 
@@ -34,8 +39,7 @@ class Chrom
     }
     public Chrom GetMix(Chrom chrom2)
     {
-        Random rnd = new Random();
-        int pos = rnd.Next(0, this.value.Length);
+        int pos = RandomNumber.rnd.Next(0, this.value.Length);
         string value1 = this.value;
         string value2 = chrom2.getValue();
         string valueresult = value1.Substring(0, pos) + value2.Substring(pos, value2.Length - pos);
@@ -43,15 +47,14 @@ class Chrom
         result.Mutation();
         return result;
     }
-    public void Mutation()
+    public void Mutation(int option=0)
     {
-        Random rnd = new Random();
-        int randomnumhappen = rnd.Next(0, 15);
-        if (randomnumhappen != 4)
+        int randomnumhappen = RandomNumber.rnd.Next(0, 15);
+        if (randomnumhappen != 4 && option==0)
         {
-            return; //Losowa szansa na mutacje 1/15? jezeli nie wypadnie 4 to nie mutujemy nic
+            return;
         }
-        int randomnum = rnd.Next(0, this.value.Length);
+        int randomnum = RandomNumber.rnd.Next(0, this.value.Length);
         char[] array = this.value.ToCharArray(); //change one char string is immuable
         if (this.value[randomnum] == '0')
         {
@@ -64,6 +67,11 @@ class Chrom
         //Console.WriteLine("Mutation!");
         this.value = new string(array);
     }
+
+    public object Clone()
+    {
+        return new Chrom(this.value);
+    }
     public double getResult()
     {
         double number = (3 / (Math.Pow(2, this.value.Length) - 1)); //cast to double int always = 0
@@ -73,7 +81,9 @@ class Chrom
         return result;
     }
 }
-class Param
+
+//Chrom jest OK!
+class Param : ICloneable
 {
     public List<Chrom> Chroms;
     public Param(string[] value)
@@ -82,12 +92,12 @@ class Param
         value = value ?? new string[] { "0000" };
         for (int i = 0; i < value.Length; i++)
         {
-            Chroms.Add(new Chrom(value[i]));
+            Chroms.Add(new Chrom(value[i])); //OK
         }
     }
     public Param Mix(Param other)
     {
-        Param result = new Param(this.Chroms.Count);
+        Param result = new Param(this.Chroms[0].getLength(),other.Chroms.Count);
         if (this.Chroms.Count != other.Chroms.Count)
         {
             throw new ArgumentException("Liczba Chromosomow nie zgadza się");
@@ -98,12 +108,12 @@ class Param
         }
         return result;
     }
-    public Param(int sizechrom = 4)
+    public Param(int sizechrom = 4, int countchrom = 1)
     {
         Chroms = new List<Chrom>();
-        for (int i = 0; i < sizechrom; i++)
+        for (int i = 0; i < countchrom; i++)
         {
-            Chroms.Add(new Chrom());
+            Chroms.Add(new Chrom(sizechrom)); // OK
         }
     }
     public double getResult()
@@ -115,10 +125,20 @@ class Param
         }
         return (result / Chroms.Count);
     }
+    public object Clone()
+    {
+        List<Chrom> Chromss= new List<Chrom>(); ;
+        Param newparam = new Param();
+        foreach (Chrom chrom in this.Chroms)
+        {
+            Chromss.Add((Chrom)chrom.Clone());
+        }
+        newparam.Chroms = Chromss;
+        return newparam;
 
-
+    }
 }
-class Body
+class Body : ICloneable
 {
     private List<Param> Params;
     public Body(string[,] value)//# moment trzeba przemyslec to 2D array
@@ -131,17 +151,33 @@ class Body
             {
                 row[j] = value[i, j];
             }
-            Params.Add(new Param(row));
+            Params.Add(new Param(row)); //OK
         }
     }
-    public Body(int sizeparams = 4, int sizechrom = 4)
+    public Body(int sizeparams = 4, int sizechrom = 4 , int countchrom=1)
     {
         Params = new List<Param>();
         for (int i = 0; i < sizeparams; i++)
         {
-            Params.Add(new Param(sizechrom));
+            Params.Add(new Param(sizechrom,countchrom));
         }
 
+    }
+    public void deleteparmdebug()
+    {
+        Params = new List<Param>();
+    }
+    public object Clone()
+    {
+        Body clone = new Body();
+        clone.Params = new List<Param>();
+
+        foreach (Param param in this.Params)
+        {
+            clone.Params.Add((Param)param.Clone());
+        }
+
+        return clone;
     }
     public double getResult()
     {
@@ -169,7 +205,16 @@ class Body
         return result;
     }
 
-
+    public void Mutation()
+    {
+        foreach(Param param in Params)
+        {
+            foreach(Chrom chrom in param.Chroms)
+            {
+                chrom.Mutation(1);
+            }
+        }
+    }
     private void changeParams(List<Param> ListParam)
     {
         this.Params = ListParam;
@@ -187,11 +232,11 @@ class Body
 class BodyManager
 {
     public List<Body> Bodies = new List<Body>();
-    public BodyManager(int sizefamily = 5)
+    public BodyManager(int sizefamily = 5,int chromsize=4,int parmsize=4,int countchrom=4)
     {
         for (int i = 0; i < sizefamily; i++)
         {
-            Bodies.Add(new Body());
+            Bodies.Add(new Body(parmsize,chromsize,countchrom));
         }
     }
     public BodyManager(List<Body> bodies)
@@ -221,40 +266,40 @@ class BodyManager
         {
             throw new ArgumentException("Turniej bez członków");
         }
-        else if(this.Bodies.Count * sizeintour < numberoftour)
+        else if (this.Bodies.Count * sizeintour < numberoftour)
         {
             throw new ArgumentException("Wiecej turniejów niż mozliwych członków");
         }
-            Random rnd = new Random();
         List<Body> Winners = new List<Body>();
         for (int i = 0; i < numberoftour; i++)
         {
-            rnd = new Random();
             List<Body> tour = new List<Body>();
-            while(tour.Count< sizeintour && tour.Count < this.Bodies.Count)
+            while (tour.Count < sizeintour && tour.Count < this.Bodies.Count)
             {
-                var numberrandind = rnd.Next(0, this.Bodies.Count);
+
+                var numberrandind = RandomNumber.rnd.Next(0, this.Bodies.Count);
                 Body Potencjal = (this.Bodies[numberrandind]);
-                if (!tour.Contains(Potencjal) && !Winners.Contains(Potencjal)) //unikalni zwyciezcy
+                if (!tour.Contains(Potencjal)) // sam ze soba zeby nie grał
                 {
                     tour.Add(Potencjal);
                 }
+                
 
             }
             if (tour.Any())
             {
-                Winners.Add(tour.MaxBy(element => element.getResult()) ?? tour[0]); //Warning jezeli null Maxby to daj pierwszy element
+                Winners.Add((Body)tour.MaxBy(element => element.getResult()).Clone() ?? (Body)tour[0].Clone()); //Warning jezeli null Maxby to daj pierwszy element
             }
-             
+
         }
         return Winners;
     }
     public void getmixeach()
     {
-        List<Body> toAdd=new List<Body>();
+        List<Body> toAdd = new List<Body>();
         for (int i = 0; i < this.Bodies.Count; i++)
         {
-            for(int j=0;j<this.Bodies.Count; j++)
+            for (int j = 0; j < this.Bodies.Count; j++)
             {
                 if (this.Bodies[i] != this.Bodies[j])
                 {
@@ -267,40 +312,47 @@ class BodyManager
             addBodies(body);
         }
     }
-    public void starttour(int sizeoftour=2,int numberoftours=10)
+    public void starttour(int sizeoftour = 2, int numberoftours = 10)
     {
-        this.Bodies = this.Tournament();
+        this.Bodies = this.Tournament(sizeoftour,numberoftours);
     }
     public void selectbybest(int numberofbest = 3)
     {
-        if(this.Bodies.Count < numberofbest)
+        if (this.Bodies.Count < numberofbest)
         {
             throw new Exception("Error za duzo wybierasz najlepszych mniej niz jest bodies");
         }
-        List<Body>bests = new List<Body>();
-        bests = this.Bodies.OrderByDescending(obj=>obj.getResult()).Take(numberofbest).ToList(); //Sortuj + bierz 3 pierwsze
+        List<Body> bests = new List<Body>();
+        bests = this.Bodies.OrderByDescending(obj => obj.getResult()).Take(numberofbest).ToList(); //Sortuj + bierz 3 pierwsze
         this.Bodies = bests;
+    }
+    public void Mutation()
+    {
+        foreach (Body body in this.Bodies)
+        {
+            body.Mutation();
+        }
     }
 
 }
 
 class Program
 {
-
     static void Main()
     {
-        var test = new BodyManager(4);
+        var test = new BodyManager(5,5,2,1); //Family Size, Chrom Size, Parm Size, Count Chrom
         Console.WriteLine("Wygenerowane Organizmy");
         test.showBodies();
-        for (int i = 0; i < 99; i++)
+        for (int i = 0; i < 40; i++)
         {
 
             Console.WriteLine("Mixing");
             test.getmixeach();
             test.showBodies();
             Console.WriteLine("Po turnieju");
-            test.starttour(2, 5);
+            test.starttour(2, 3); //specialnie 
             //test.selectbybest(10);
+            //test.Mutation();
             test.showBodies();
         }
         Console.WriteLine("Wynik Ostateczny");
