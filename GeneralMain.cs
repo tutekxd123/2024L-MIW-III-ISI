@@ -287,9 +287,6 @@ class BodyManager : ICloneable
                 {
                     toAdd.Add(this.Bodies[i].mixBody(this.Bodies[j]).Mutation(1));
                 }
-                else
-                {
-                }
             }
         }
         foreach (Body body in toAdd)
@@ -370,11 +367,11 @@ class Program
         var test = new BodyManager(5, 4, 2, 1,1,-2); //Family Size, Chrom Size, Parm Size, Count Chrom,Max numbers=100,Min Numb
         Console.WriteLine("Wygenerowane Organizmy");
         test.showBodies();
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < 999; i++)
         {
             //Console.WriteLine("Po Tunieju i dodaniu najmocniejszego przed tutniejem");
             var bestfrom = test.selectbybest(2,3);
-            test.starttour(2, 3);
+            test.starttour(2, 4);
             Console.WriteLine("Po Tunieju");
             test.showBodies();
             Console.WriteLine("Po Mixing!");
