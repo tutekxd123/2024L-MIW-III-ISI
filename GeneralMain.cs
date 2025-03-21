@@ -1,5 +1,5 @@
-
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 class RandomNumber
 {
@@ -44,16 +44,11 @@ class Chrom : ICloneable
         string value2 = chrom2.getValue();
         string valueresult = value1.Substring(0, pos) + value2.Substring(pos, value2.Length - pos);
         Chrom result = new Chrom(valueresult);
-        result.Mutation();
+        //this.Mutation();
         return result;
     }
-    public void Mutation(int option=0)
+    public void Mutation()
     {
-        int randomnumhappen = RandomNumber.rnd.Next(0, 15);
-        if (randomnumhappen != 4 && option==0)
-        {
-            return;
-        }
         int randomnum = RandomNumber.rnd.Next(0, this.value.Length);
         char[] array = this.value.ToCharArray(); //change one char string is immuable
         if (this.value[randomnum] == '0')
@@ -64,7 +59,6 @@ class Chrom : ICloneable
         {
             array[randomnum] = '0';
         }
-        //Console.WriteLine("Mutation!");
         this.value = new string(array);
     }
 
@@ -72,32 +66,20 @@ class Chrom : ICloneable
     {
         return new Chrom(this.value);
     }
-    public double getResult()
+    public double getResult(double Maxnumb = 1, double minNumb=-2) //Rework na ogolny!
     {
-        double number = (3 / (Math.Pow(2, this.value.Length) - 1)); //cast to double int always = 0
-
+        double number = ((Maxnumb-minNumb) / (Math.Pow(2, this.value.Length) - 1)); //cast to double int always = 0
         double result = (double)Convert.ToInt16(this.value, 2) * number;
-        result = result - 2;
+        result = result + minNumb;
         return result;
     }
 }
-
-//Chrom jest OK!
 class Param : ICloneable
 {
     public List<Chrom> Chroms;
-    public Param(string[] value)
-    {
-        Chroms = new List<Chrom>();
-        value = value ?? new string[] { "0000" };
-        for (int i = 0; i < value.Length; i++)
-        {
-            Chroms.Add(new Chrom(value[i])); //OK
-        }
-    }
     public Param Mix(Param other)
     {
-        Param result = new Param(this.Chroms[0].getLength(),other.Chroms.Count);
+        Param result = new Param(this.Chroms[0].getLength(), other.Chroms.Count);
         if (this.Chroms.Count != other.Chroms.Count)
         {
             throw new ArgumentException("Liczba Chromosomow nie zgadza się");
@@ -116,18 +98,18 @@ class Param : ICloneable
             Chroms.Add(new Chrom(sizechrom)); // OK
         }
     }
-    public double getResult()
+    public double getResult(double MaxNumber=1,double MinNumber=-2)
     {
         double result = 0;
         for (int i = 0; i < Chroms.Count; i++)
         {
-            result += Chroms[i].getResult();
+            result += Chroms[i].getResult(MaxNumber,MinNumber);
         }
-        return (result / Chroms.Count);
+        return (result / Chroms.Count); //OK?
     }
     public object Clone()
     {
-        List<Chrom> Chromss= new List<Chrom>(); ;
+        List<Chrom> Chromss = new List<Chrom>(); ;
         Param newparam = new Param();
         foreach (Chrom chrom in this.Chroms)
         {
@@ -141,31 +123,14 @@ class Param : ICloneable
 class Body : ICloneable
 {
     private List<Param> Params;
-    public Body(string[,] value)//# moment trzeba przemyslec to 2D array
-    {
-        Params = new List<Param>();
-        for (int i = 0; i < value.Length; i++)
-        {
-            string[] row = new string[value.GetLength(1)]; //2D size
-            for (int j = 0; j < value.GetLength(0); j++)
-            {
-                row[j] = value[i, j];
-            }
-            Params.Add(new Param(row)); //OK
-        }
-    }
-    public Body(int sizeparams = 4, int sizechrom = 4 , int countchrom=1)
+    public Body(int sizeparams = 4, int sizechrom = 4, int countchrom = 1)
     {
         Params = new List<Param>();
         for (int i = 0; i < sizeparams; i++)
         {
-            Params.Add(new Param(sizechrom,countchrom));
+            Params.Add(new Param(sizechrom, countchrom));
         }
 
-    }
-    public void deleteparmdebug()
-    {
-        Params = new List<Param>();
     }
     public object Clone()
     {
@@ -179,12 +144,12 @@ class Body : ICloneable
 
         return clone;
     }
-    public double getResult()
+    public double getResult(double MaxNumber=1,double MinNumber=-2)
     {
         double result = 0;
         for (int i = 0; i < Params.Count; i++)
         {
-            result += Params[i].getResult();
+            result += Params[i].getResult(MaxNumber,MinNumber);
         }
         return Math.Round((result / Params.Count), 3);
     }
@@ -207,13 +172,26 @@ class Body : ICloneable
 
     public void Mutation()
     {
-        foreach(Param param in Params)
+        foreach (Param param in Params)
         {
-            foreach(Chrom chrom in param.Chroms)
+            foreach (Chrom chrom in param.Chroms)
             {
-                chrom.Mutation(1);
+                chrom.Mutation();
             }
         }
+    }
+    public Body Mutation(int bloat=0) //with some parms return new body!
+    {
+        Body body = (Body)this.Clone();
+
+        foreach (Param param in body.Params)
+        {
+            foreach (Chrom chrom in param.Chroms)
+            {
+                chrom.Mutation();
+            }
+        }
+        return body;
     }
     private void changeParams(List<Param> ListParam)
     {
@@ -228,15 +206,18 @@ class Body : ICloneable
         return this.Params[0].Chroms.Count;
     }
 }
-
-class BodyManager
+class BodyManager : ICloneable
 {
     public List<Body> Bodies = new List<Body>();
-    public BodyManager(int sizefamily = 5,int chromsize=4,int parmsize=4,int countchrom=4)
+    double MaxNumber = 1;
+    double MinNumber = -2;
+    public BodyManager(int sizefamily = 5, int chromsize = 4, int parmsize = 4, int countchrom = 4,int maxnumber=1,int minnumber=-2)
     {
+        this.MaxNumber = maxnumber;
+        this.MinNumber = minnumber;
         for (int i = 0; i < sizefamily; i++)
         {
-            Bodies.Add(new Body(parmsize,chromsize,countchrom));
+            Bodies.Add(new Body(parmsize, chromsize, countchrom));
         }
     }
     public BodyManager(List<Body> bodies)
@@ -252,7 +233,7 @@ class BodyManager
     {
         for (int i = 0; i < Bodies.Count; i++)
         {
-            Console.WriteLine("Body: {0} Result: {1}", i, Bodies[i].getResult());
+            Console.WriteLine("Body: {0} Result: {1}", i, Bodies[i].getResult(MaxNumber,MinNumber));
         }
     }
     private List<Body> Tournament(int sizeintour = 2, int numberoftour = 10)
@@ -283,27 +264,31 @@ class BodyManager
                 {
                     tour.Add(Potencjal);
                 }
-                
+
 
             }
             if (tour.Any())
             {
-                Winners.Add((Body)tour.MaxBy(element => element.getResult()).Clone() ?? (Body)tour[0].Clone()); //Warning jezeli null Maxby to daj pierwszy element
+                Winners.Add((Body)tour.MaxBy(element => element.getResult(this.MaxNumber,this.MinNumber)).Clone() ?? (Body)tour[0].Clone()); //Warning jezeli null Maxby to daj pierwszy element
             }
 
         }
+
         return Winners;
     }
-    public void getmixeach()
+    public void getmixeach() // Can't mix with each! // REWORK THIS SHIT!
     {
         List<Body> toAdd = new List<Body>();
         for (int i = 0; i < this.Bodies.Count; i++)
         {
-            for (int j = 0; j < this.Bodies.Count; j++)
+            for (int j = i; j < this.Bodies.Count; j++)
             {
-                if (this.Bodies[i] != this.Bodies[j])
+                if (this.Bodies[i].getResult(this.MaxNumber,this.MinNumber) != this.Bodies[j].getResult(this.MaxNumber, this.MinNumber)) //jezeli ten sam wynik to sa te same
                 {
-                    toAdd.Add(this.Bodies[i].mixBody(this.Bodies[j]));
+                    toAdd.Add(this.Bodies[i].mixBody(this.Bodies[j]).Mutation(1));
+                }
+                else
+                {
                 }
             }
         }
@@ -311,10 +296,18 @@ class BodyManager
         {
             addBodies(body);
         }
+
     }
     public void starttour(int sizeoftour = 2, int numberoftours = 10)
     {
-        this.Bodies = this.Tournament(sizeoftour,numberoftours);
+        this.Bodies = this.Tournament(sizeoftour, numberoftours);
+
+    }
+    public BodyManager starttour(int sizeoftour = 2, int numberoftours = 10,int option=1)
+    {
+        BodyManager result = (BodyManager)this.Clone();
+        result.starttour(sizeoftour, numberoftours);
+        return result;
     }
     public void selectbybest(int numberofbest = 3)
     {
@@ -326,33 +319,84 @@ class BodyManager
         bests = this.Bodies.OrderByDescending(obj => obj.getResult()).Take(numberofbest).ToList(); //Sortuj + bierz 3 pierwsze
         this.Bodies = bests;
     }
+    public List<Body> selectbybest(int numberofbest = 3,int option=1)
+    {
+        if (this.Bodies.Count < numberofbest)
+        {
+            throw new Exception("Error za duzo wybierasz najlepszych mniej niz jest bodies");
+        }
+        List<Body> bests = new List<Body>();
+        bests = this.Bodies.OrderByDescending(obj => obj.getResult()).Take(numberofbest).ToList(); //Sortuj + bierz 3 pierwsze
+        return bests;
+    }
     public void Mutation()
     {
         foreach (Body body in this.Bodies)
         {
             body.Mutation();
         }
+
+    }
+    public object Clone()
+    {
+        BodyManager clone = new BodyManager();
+        clone.MaxNumber = this.MaxNumber;
+        foreach(Body body in this.Bodies)
+        {
+            clone.addBodies((Body)body.Clone());
+        }
+        clone.MinNumber = this.MinNumber;
+        
+        return clone;
+    }
+    public BodyManager Mutation(int bloat=0)
+    {
+        BodyManager result = (BodyManager)this.Clone();
+
+        foreach (Body body in result.Bodies)
+        {
+           body.Mutation();
+        }
+        return result;
     }
 
 }
 
 class Program
+
 {
     static void Main()
     {
-        var test = new BodyManager(5,5,2,1); //Family Size, Chrom Size, Parm Size, Count Chrom
+        var test = new BodyManager(5, 4, 1, 1,1,-2); //Family Size, Chrom Size, Parm Size, Count Chrom,Max numbers=100,Min Numb
         Console.WriteLine("Wygenerowane Organizmy");
         test.showBodies();
-        for (int i = 0; i < 40; i++)
+        for (int i = 0; i < 5; i++)
         {
-
-            Console.WriteLine("Mixing");
+            //Console.WriteLine("Po Tunieju i dodaniu najmocniejszego przed tutniejem");
+            var bestfrom = test.selectbybest(2,3);
+            test.starttour(2, 3);
+            Console.WriteLine("Po Tunieju");
+            test.showBodies();
+            Console.WriteLine("Po Mixing!");
             test.getmixeach();
             test.showBodies();
-            Console.WriteLine("Po turnieju");
-            test.starttour(2, 3); //specialnie 
-            //test.selectbybest(10);
-            //test.Mutation();
+            foreach (Body body in bestfrom)
+            {
+                int ishtere = 0;
+                foreach(Body body2 in test.Bodies)
+                if (body.getResult()==body2.getResult())
+                {
+                        ishtere = 1;
+                        break;
+                }
+                if(ishtere == 0)
+                {
+                    test.addBodies(body);
+                    break;
+                }
+                
+            }
+            Console.WriteLine("Generacja {0}", i);
             test.showBodies();
         }
         Console.WriteLine("Wynik Ostateczny");
