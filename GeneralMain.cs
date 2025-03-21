@@ -44,7 +44,7 @@ class Chrom : ICloneable
         string value2 = chrom2.getValue();
         string valueresult = value1.Substring(0, pos) + value2.Substring(pos, value2.Length - pos);
         Chrom result = new Chrom(valueresult);
-        //this.Mutation();
+        this.Mutation();
         return result;
     }
     public void Mutation()
@@ -367,10 +367,10 @@ class Program
 {
     static void Main()
     {
-        var test = new BodyManager(5, 4, 1, 1,1,-2); //Family Size, Chrom Size, Parm Size, Count Chrom,Max numbers=100,Min Numb
+        var test = new BodyManager(5, 4, 2, 1,1,-2); //Family Size, Chrom Size, Parm Size, Count Chrom,Max numbers=100,Min Numb
         Console.WriteLine("Wygenerowane Organizmy");
         test.showBodies();
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 9; i++)
         {
             //Console.WriteLine("Po Tunieju i dodaniu najmocniejszego przed tutniejem");
             var bestfrom = test.selectbybest(2,3);
