@@ -137,7 +137,7 @@ class Body : ICloneable
             new List<double>{1,1,0}
         };
 
-    public Network network = new Network(new List<int> { 2,1 });
+    public Network network = new Network(new List<int> { 2,2, 1 });
     public Body(int paramsize = 3, int paramcount = 1, double maxNumber = 2, double MinNumber = -1)
     {
         this.MaxNumber = maxNumber;
@@ -221,12 +221,21 @@ class Body : ICloneable
         //Params[0].Decode(this.MinNumber, this.MaxNumber), Params[1].Decode(this.MinNumber, this.MaxNumber)
         //extra numbs=>3 parms
         var wagi = new List<List<double>>();
-        wagi.Add(new List<double> { Params[0].Decode(this.MinNumber, this.MaxNumber), Params[1].Decode(this.MinNumber, this.MaxNumber) });
-        network.Changewags(1,wagi);
+        wagi.Add(new List<double> { Params[4].Decode(this.MinNumber, this.MaxNumber), Params[5].Decode(this.MinNumber, this.MaxNumber) });
+        network.Changewags(2, wagi);
+
+        var wagi2 = new List<List<double>>();
+        wagi2.Add(new List<double> { Params[0].Decode(this.MinNumber, this.MaxNumber), Params[1].Decode(this.MinNumber, this.MaxNumber) });
+        wagi2.Add(new List<double> { Params[2].Decode(this.MinNumber, this.MaxNumber), Params[3].Decode(this.MinNumber, this.MaxNumber) });
+
         var extranumbers = new List<List<double>>();
-        extranumbers.Add(new List<double> { Params[2].Decode(0, 1), Params[3].Decode(0, 1) });
-        network.ChangeextraNumber(0, extranumbers[0]);
-        return network.CheckError(this.probkidotest).SelectMany(x=>x).Sum();
+        extranumbers.Add(new List<double> { Params[6].Decode(this.MinNumber, this.MaxNumber) });
+        extranumbers.Add(new List<double> { Params[7].Decode(this.MinNumber, this.MaxNumber), Params[8].Decode(this.MinNumber, this.MaxNumber) });
+
+        network.Changewags(1, wagi2);
+        network.ChangeextraNumber(1, extranumbers[1]);
+        network.ChangeextraNumber(2, extranumbers[0]);
+        return network.CheckError(this.probkidotest).SelectMany(x => x).Sum();
     }
 }
 class BodyManager : ICloneable
@@ -388,7 +397,7 @@ class BodyManager : ICloneable
             List<Body> TourMembers = new List<Body>();
             int firstrandom = RandomNumber.rnd.Next(0, sizeoftour);
             TourMembers.Add(this.ListBodies[firstrandom]);
-            for (int j = 0; j < sizeoftour-1; j++)
+            for (int j = 0; j < sizeoftour - 1; j++)
             {
                 //Losuj unikalnych przeciwnikow, jezeli sie uda wylosowac co sie juz jest to losuj jeszcze raz
                 int random = RandomNumber.rnd.Next(0, this.ListBodies.Count());
@@ -458,7 +467,7 @@ class Neuron
     }
     public double Sigmoid()
     {
-        return 1.0 / (1 + Math.Exp(-(this.value+this.extranumber)));
+        return 1.0 / (1 + Math.Exp(-(this.value + this.extranumber)));
     }
 
 
@@ -480,11 +489,11 @@ class Warstwa
     }
     public void ChangeExtraNumber(List<double> extranumbers)
     {
-        if(extranumbers.Count != this.Neurons.Count)
+        if (extranumbers.Count != this.Neurons.Count)
         {
             throw new Exception("ChangeExtraNumber Class: Warstwa diffrent length lists");
         }
-        for(int i = 0;i < extranumbers.Count; i++)
+        for (int i = 0; i < extranumbers.Count; i++)
         {
             this.Neurons[i].extranumber = extranumbers[i];
         }
@@ -592,7 +601,7 @@ class Network
 
     }
 
-    public void ChangeextraNumber(int indexwarstwa,List<double>extranumbers)
+    public void ChangeextraNumber(int indexwarstwa, List<double> extranumbers)
     {
         this.Warstwa[indexwarstwa].ChangeExtraNumber(extranumbers);
         //XD
@@ -632,15 +641,15 @@ class Program
 {
     static void Main()
     {
-        BodyManager test = new BodyManager(13,16,4,-10,10);
-        for (int i = 0; i < 5000; i++)
+        BodyManager test = new BodyManager(16, 16, 9, -10, 10);
+        for (int i = 0; i < 15000; i++)
         {
 
             //Console.WriteLine("Stan Body:");
             //test.showBodies();
             var bests = test.SelectBybest(test.CountBodies(), 1);
             //Console.WriteLine("Operator Turniej");
-            test.Tournament(3, test.CountBodies()-1);
+            test.Tournament(3, test.CountBodies() - 1);
 
 
 
@@ -655,7 +664,7 @@ class Program
             {
                 list[j].Mutation();
             }
-            
+
             //Dodawanie najlepszego hotdeck ze starej listy
             foreach (Body body in bests)
             {
@@ -674,16 +683,16 @@ class Program
                     break;
                 }
             }
-            
+
             //test.showBodies();
-           // Console.WriteLine("Mutation Test");
+            // Console.WriteLine("Mutation Test");
             //test.MutationAll(100);
-           // test.showBodies();
-           // Console.WriteLine("Add Best :)");
+            // test.showBodies();
+            // Console.WriteLine("Add Best :)");
 
-            
 
-           // test.showBodies();
+
+            // test.showBodies();
             //test.getBestAndAvg();
             //Dodać wypisywanie średnie i najlepsze UwU
         }
@@ -692,9 +701,9 @@ class Program
 
         var bestbody = test.SelectBybest(1, 1);
         bestbody[0].network.calcValue(new List<double> { 0, 1 });
-        bestbody[0].network.calcValue(new List<double> { 1,0 });
-        bestbody[0].network.calcValue(new List<double> { 1,1 });
-        bestbody[0].network.calcValue(new List<double> { 0,0 });
+        bestbody[0].network.calcValue(new List<double> { 1, 0 });
+        bestbody[0].network.calcValue(new List<double> { 1, 1 });
+        bestbody[0].network.calcValue(new List<double> { 0, 0 });
     }
 
 }
