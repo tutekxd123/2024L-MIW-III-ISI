@@ -5,7 +5,7 @@ class RandomNumber
     public static Random rnd = new Random();
     public static void Shuffle<T>(List<T> array)
     {
-        for (int i = array.Count-1; i >= 0; i--)
+        for (int i = array.Count - 1; i >= 0; i--)
         {
             var random = rnd.Next(array.Count);
             (array[i], array[random]) = (array[random], array[i]);
@@ -29,12 +29,12 @@ class Neuron
         for (int i = 0; i < size; i++)
         {
             //wagi.Add(2);
-            wagi.Add(RandomNumber.rnd.Next(-5,5));
+            wagi.Add(RandomNumber.rnd.Next(-5, 5));
         }
     }
     public double Sigmoid()
     {
-        return 1.0 / (1 + Math.Exp(- (this.value + this.extranumber) ));
+        return 1.0 / (1 + Math.Exp(-(this.value)));
     }
 
 
@@ -67,7 +67,7 @@ class Warstwa
             {
                 this.Neurons[i].value += preview.Neurons[j].value * this.Neurons[i].wagi[j];
             }
-            //this.Neurons[i].value += this.Neurons[i].extranumber;
+            this.Neurons[i].value += this.Neurons[i].extranumber;
             this.Neurons[i].value = this.Neurons[i].Sigmoid(); //Sigmoid aktywacja?
         }
     }
@@ -106,7 +106,7 @@ class Network
     }
     public double dsigmoidValue(double numb) //pochodna sigmoida
     {
-        return numb * (1- numb);
+        return numb * (1 - numb);
     }
     public List<double> getResultLast(int index)
     {
@@ -131,7 +131,7 @@ class Network
             List<double> input = probki[i].Slice(0, this.Warstwa[0].Neurons.Count);
             List<double> output = probki[i].Slice(this.Warstwa[0].Neurons.Count, lastWarstwa.Neurons.Count);
             this.calcValue(input);
-            List<double> resultlast = this.getResultLast(Warstwa.Count-1);
+            List<double> resultlast = this.getResultLast(Warstwa.Count - 1);
             //Co dalej?
             Console.WriteLine("Dla próbki {0}", string.Join(",", probki[i]));
             for (int j = 0; j < resultlast.Count; j++)
@@ -152,7 +152,7 @@ class Network
         this.CheckError(probki);
 
         //Calc ostatnia warstwa
-        double paramteruczenia = 0.3;
+        double paramteruczenia = 0.8;
         //
         for (int i = 0; i < probki.Count; i++)
         {
@@ -163,30 +163,47 @@ class Network
             {
                 var pochodnabledu = goodvalues[j] - valueslast[j];
                 // pochodnabledu * pochodna sigmoid
-                double delta = pochodnabledu * paramteruczenia * this.dsigmoidValue(valueslast[j]); //this.dsigmoidValue(valueslast[j]) //Razy pochodna sigmoida wartosci neurona
+                double delta = pochodnabledu * this.dsigmoidValue(valueslast[j]); //this.dsigmoidValue(valueslast[j]) //Razy pochodna sigmoida wartosci neurona
                 this.Warstwa[Warstwa.Count - 1].Neurons[j].delta = delta;
             }
-            
+
         }
 
-        
-        //Delta obliczna dla Ostatniej Warstwy? Tera Aktualizacja Wag i jakas petla?
-        for(int i=Warstwa.Count-2; i >= 0; i--) //dla pierwszej warstwy nic nie robimy
+
+        //Delta obliczna dla Ostatniej Warstwy? Liczenie Delt Dla Wszystkich Warstw poza wejsciowa
+        for (int i = Warstwa.Count - 2; i >= 0; i--) //dla pierwszej warstwy nic nie robimy
         {
             var warstwa = Warstwa[i];
             var warstwanext = Warstwa[i + 1]; //poprzednia warstwa
-            for(int j = 0; j < warstwanext.Neurons.Count; j++) { //iterujemy po Warstwie ze chcemy obliczyc dla kazdego neuronu delta?
+            for (int j = 0; j < warstwanext.Neurons.Count; j++)
+            { //iterujemy po Warstwie ze chcemy obliczyc dla kazdego neuronu delta?
                 double sumapoprawek = 0;
-                var poprawkabias = warstwanext.Neurons[j].delta;
-                warstwanext.Neurons[j].extranumber += warstwanext.Neurons[j].delta; // Aktualizacja BIAS
+                //var poprawkabias = warstwanext.Neurons[j].delta;
+               // warstwanext.Neurons[j].extranumber += paramteruczenia* warstwanext.Neurons[j].delta; // Aktualizacja BIAS
                 for (int k = 0; k < warstwa.Neurons.Count; k++)
                 {
-
-                    var poprawka = warstwanext.Neurons[j].delta * warstwa.Neurons[k].value;
-                    warstwanext.Neurons[j].wagi[k] += poprawka; //AKTUALZIACJA WAG!
                     sumapoprawek += warstwanext.Neurons[j].wagi[k] * warstwanext.Neurons[j].delta;
+                   // var poprawka = warstwanext.Neurons[j].delta * warstwa.Neurons[k].value;
+                    //warstwanext.Neurons[j].wagi[k] += poprawka * paramteruczenia; //AKTUALZIACJA WAG!
+
                 }
                 warstwa.Neurons[j].delta = sumapoprawek * this.dsigmoidValue(warstwa.Neurons[j].value); // DELTA DLA POPRZEDNIEJ WARSTWY
+            }
+        }
+
+        for (int i = Warstwa.Count - 2; i >= 0; i--) //Aktualizujemy Wagi bo nie mozna wczesniej tego zrobic bo delta bazuje jednak na wagach :D
+        {
+            var warstwa = Warstwa[i];
+            var warstwanext = Warstwa[i + 1]; //poprzednia warstwa
+            for (int j = 0; j < warstwanext.Neurons.Count; j++)
+            {
+                var poprawkabias = warstwanext.Neurons[j].delta;
+                warstwanext.Neurons[j].extranumber += paramteruczenia * warstwanext.Neurons[j].delta;
+                for (int k = 0; k < warstwa.Neurons.Count; k++)
+                {
+                    var poprawka = warstwanext.Neurons[j].delta * warstwa.Neurons[k].value;
+                    warstwanext.Neurons[j].wagi[k] += poprawka * paramteruczenia;
+                }
             }
         }
 
@@ -214,22 +231,16 @@ class Program
         };
 
         //DEBUG WARTOSCI BNOWAK
-        /*
-        test.Warstwa[1].Neurons[0].wagi[0] = 0.1;
-        test.Warstwa[1].Neurons[0].wagi[1] = 0.2;
-        test.Warstwa[1].Neurons[0].extranumber = 0.3;
-        test.Warstwa[1].Neurons[1].extranumber = 0.6;
-        test.Warstwa[1].Neurons[1].wagi[0] = 0.4;
-        test.Warstwa[1].Neurons[1].wagi[1] = 0.5;
-        test.Warstwa[2].Neurons[0].wagi[0] = 0.7;
-        test.Warstwa[2].Neurons[0].wagi[1] = -0.8;
-        test.Warstwa[2].Neurons[0].extranumber = 0.9;
-        */
-        for(int i = 0; i < 50000; i++)
+        
+        test.TrainNetwork(probki);
+
+        
+        for (int i = 0; i < 100000; i++)
         {
             Console.WriteLine("ITERACJA nr.{0}", i);
             test.TrainNetwork(probki);
         }
+        
 
 
     }
