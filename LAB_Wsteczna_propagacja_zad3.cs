@@ -17,7 +17,7 @@ class Neuron
 {
     public List<double> wagi = new List<double>();
     public double value = 0;
-    public double extranumber = RandomNumber.rnd.NextDouble()*2 - 1;
+    public double extranumber = RandomNumber.rnd.NextDouble() * 2 - 1;
     public double error = 0;
     public double delta = 0;
     public Neuron(List<double> wagi)
@@ -148,11 +148,11 @@ class Network
     public void TrainNetwork(List<List<double>> probki)
     {
         RandomNumber.Shuffle(probki);
-        Console.WriteLine("PRZED UCZENIEM!");
-        this.CheckError(probki);
+        //Console.WriteLine("PRZED UCZENIEM!");
+        //this.CheckError(probki);
 
         //Calc ostatnia warstwa
-        double paramteruczenia = 0.3;
+        double paramteruczenia = 0.25;
         //
         for (int i = 0; i < probki.Count; i++)
         {
@@ -207,8 +207,8 @@ class Network
             }
         }
 
-        Console.WriteLine("PO UCZENIU!");
-        this.CheckError(probki);
+        //Console.WriteLine("PO UCZENIU!");
+        //this.CheckError(probki);
 
     }
 
@@ -239,11 +239,12 @@ class Program
 
         for (int i = 0; i < 100000; i++)
         {
-            Console.WriteLine("ITERACJA nr.{0}", i);
+            //Console.WriteLine("ITERACJA nr.{0}", i);
             test.TrainNetwork(probki);
         }
 
         test.TrainNetwork(probki);
+        test.CheckError(probki);
 
     }
 }
