@@ -7,7 +7,7 @@ class RandomNumber
     {
         for (int i = array.Count - 1; i >= 0; i--)
         {
-            var random = rnd.Next(array.Count);
+            var random = rnd.Next(i+1);
             (array[i], array[random]) = (array[random], array[i]);
         }
     }
