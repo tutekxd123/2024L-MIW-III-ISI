@@ -7,7 +7,7 @@ class RandomNumber
     {
         for (int i = array.Count - 1; i >= 0; i--)
         {
-            var random = rnd.Next(array.Count);
+            var random = rnd.Next(i+1);
             (array[i], array[random]) = (array[random], array[i]);
         }
     }
@@ -16,8 +16,11 @@ class RandomNumber
 class Neuron
 {
     public List<double> wagi = new List<double>();
+    public List<double> wagidelta = new List<double>();
+    public List<double> deltavalue = new List<double>();
+
     public double value = 0;
-    public double extranumber = RandomNumber.rnd.NextDouble() * 2 - 1;
+    public double extranumber = RandomNumber.rnd.NextDouble()*2 - 1;
     public double error = 0;
     public double delta = 0;
     public Neuron(List<double> wagi)
@@ -88,6 +91,7 @@ class Warstwa
 class Network
 {
     public List<Warstwa> Warstwa = new List<Warstwa>();
+    public double paramteruczenia = 0.2;
     public Network(List<int> Params) //2 2 3 ->2 neurony->2 neurony -> 3 neurony?
     {
         Warstwa.Add(new Warstwa(Params[0], 0)); //Entry!
@@ -117,9 +121,9 @@ class Network
         }
         return result;
     }
-    public void CheckError(List<List<double>> probki)
+    public List<double> CheckError(List<List<double>> probki, int option=0)
     {
-        List<List<double>> result = new List<List<double>>();
+        List<double> result = new List<double>();
         var lastWarstwa = this.Warstwa[this.Warstwa.Count - 1];
         if (probki[0].Count != (this.Warstwa[0].Neurons.Count + lastWarstwa.Neurons.Count))
         {
@@ -133,85 +137,115 @@ class Network
             this.calcValue(input);
             List<double> resultlast = this.getResultLast(Warstwa.Count - 1);
             //Co dalej?
-            Console.WriteLine("Dla próbki {0}", string.Join(",", probki[i]));
+            if(option==1) Console.WriteLine("Dla próbki {0}", string.Join(",", probki[i]));
             for (int j = 0; j < resultlast.Count; j++)
             {
-                double tempresult = output[j] - resultlast[j];
-                Console.WriteLine("Neuron nr.{0} Bład:{1} Wyjscie: {2}", j, tempresult, resultlast[j]);
+                double tempresult = Math.Abs(output[j] - resultlast[j]);
+                result.Add(tempresult);
+                if (option == 1) Console.WriteLine("Neuron nr.{0} Bład:{1} Wyjscie: {2}", j, tempresult, resultlast[j]);
             }
 
 
         }
-
+        return result;
     }
 
     public void TrainNetwork(List<List<double>> probki)
     {
         RandomNumber.Shuffle(probki);
-        //Console.WriteLine("PRZED UCZENIEM!");
-        //this.CheckError(probki);
-
-        //Calc ostatnia warstwa
-        double paramteruczenia = 0.25;
-        //
-        for (int i = 0; i < probki.Count; i++)
+        foreach (var probka in probki)
         {
-            this.calcValue(probki[i].Slice(0, this.Warstwa[0].Neurons.Count));
-            var goodvalues = probki[i].Slice(this.Warstwa[0].Neurons.Count, probki[i].Count - this.Warstwa[0].Neurons.Count);
+            this.calcValue(probka.Slice(0, this.Warstwa[0].Neurons.Count));
+            var goodvalues = probka.Slice(this.Warstwa[0].Neurons.Count, probka.Count - this.Warstwa[0].Neurons.Count);
+            var lastawarstwa = this.Warstwa[this.Warstwa.Count - 1];
+            int liczbaWag = lastawarstwa.Neurons[0].wagi.Count;
+            var previewwarstaw = this.Warstwa[this.Warstwa.Count - 2];
             List<double> valueslast = this.getResultLast(Warstwa.Count - 1);
             for (int j = 0; j < valueslast.Count; j++)
             {
-                var pochodnabledu = goodvalues[j] - valueslast[j];
-                // pochodnabledu * pochodna sigmoid
-                double delta = pochodnabledu * this.dsigmoidValue(valueslast[j]); //this.dsigmoidValue(valueslast[j]) //Razy pochodna sigmoida wartosci neurona
-                this.Warstwa[Warstwa.Count - 1].Neurons[j].delta = delta;
+                double blad = 0;
+                blad =(goodvalues[j] - valueslast[j]);
+                lastawarstwa.Neurons[j].delta = paramteruczenia * blad * this.dsigmoidValue(this.Warstwa[this.Warstwa.Count - 1].Neurons[j].value);
             }
 
-        }
-
-
-        //Delta obliczna dla Ostatniej Warstwy? Liczenie Delt Dla Wszystkich Warstw poza wejsciowa
-        for (int i = Warstwa.Count - 2; i >= 0; i--) //dla pierwszej warstwy nic nie robimy
-        {
-            var warstwa = Warstwa[i];
-            var warstwanext = Warstwa[i + 1]; //poprzednia warstwa
-            for (int j = 0; j < warstwanext.Neurons.Count; j++)
-            { //iterujemy po Warstwie ze chcemy obliczyc dla kazdego neuronu delta?
-                double sumapoprawek = 0;
-                //var poprawkabias = warstwanext.Neurons[j].delta;
-                // warstwanext.Neurons[j].extranumber += paramteruczenia* warstwanext.Neurons[j].delta; // Aktualizacja BIAS
-                for (int k = 0; k < warstwa.Neurons.Count; k++)
-                {
-                    sumapoprawek += warstwanext.Neurons[j].wagi[k] * warstwanext.Neurons[j].delta;
-                    // var poprawka = warstwanext.Neurons[j].delta * warstwa.Neurons[k].value;
-                    //warstwanext.Neurons[j].wagi[k] += poprawka * paramteruczenia; //AKTUALZIACJA WAG!
-
-                }
-                warstwa.Neurons[j].delta = sumapoprawek * this.dsigmoidValue(warstwa.Neurons[j].value); // DELTA DLA POPRZEDNIEJ WARSTWY
-            }
-        }
-
-        for (int i = Warstwa.Count - 2; i >= 0; i--) //Aktualizujemy Wagi bo nie mozna wczesniej tego zrobic bo delta bazuje jednak na wagach :D
-        {
-            var warstwa = Warstwa[i];
-            var warstwanext = Warstwa[i + 1]; //poprzednia warstwa
-            for (int j = 0; j < warstwanext.Neurons.Count; j++)
+            for (int j = 0; j < valueslast.Count; j++)
             {
-                var poprawkabias = warstwanext.Neurons[j].delta;
-                warstwanext.Neurons[j].extranumber += paramteruczenia * warstwanext.Neurons[j].delta;
-                for (int k = 0; k < warstwa.Neurons.Count; k++)
+
+                lastawarstwa.Neurons[j].wagidelta = new List<double>(new double[liczbaWag]);
+                lastawarstwa.Neurons[j].deltavalue = new List<double>(new double[liczbaWag]);
+                for (int k = 0; k < lastawarstwa.Neurons[j].wagi.Count; k++)
                 {
-                    var poprawka = warstwanext.Neurons[j].delta * warstwa.Neurons[k].value;
-                    warstwanext.Neurons[j].wagi[k] += poprawka * paramteruczenia;
+                    lastawarstwa.Neurons[j].wagidelta[k] = lastawarstwa.Neurons[j].delta * lastawarstwa.Neurons[j].wagi[k];
+                    lastawarstwa.Neurons[j].deltavalue[k] = lastawarstwa.Neurons[j].delta * previewwarstaw.Neurons[k].value;;
+                }
+                //delta niech bedzie ze do bias zawsze i juz
+            }
+
+
+            
+            //Delta obliczna dla Ostatniej Warstwy? Liczenie Delt Dla Wszystkich Warstw poza wejsciowa
+            for (int i = Warstwa.Count - 2; i >= 1; i--) //dla pierwszej warstwy nic nie robimy
+            {
+                var warstwapreview = Warstwa[i - 1];
+                var warstwa = Warstwa[i];
+                var warstwanext = Warstwa[i + 1]; //poprzednia warstwa(w sensie blizej konca)
+                foreach (var neuron in warstwa.Neurons) neuron.delta = 0; //zerujemy delty na wszelki wypadek przed liczeniem sumy
+                for (int j = 0; j < warstwanext.Neurons.Count; j++)
+                {
+                    for (int x = 0; x < warstwanext.Neurons[j].wagidelta.Count; x++)
+                    {
+                        warstwa.Neurons[x].delta += warstwanext.Neurons[j].wagidelta[x]; //sumy delt
+                    }
+                } //z next bierzesz tylko delty sobie sumy
+                for(int j = 0; j < warstwa.Neurons.Count; j++)
+                {
+                    var neuron = warstwa.Neurons[j];
+                    neuron.delta *= this.dsigmoidValue(neuron.value);
+                    var liczbawag = neuron.wagi.Count;
+                    neuron.wagidelta = new List<double>();
+                    neuron.deltavalue = new List<double>();
+                    for (int x=0;x<neuron.wagi.Count;x++)
+                    {
+                        neuron.wagidelta.Add(neuron.wagi[x]* neuron.delta);
+                        neuron.deltavalue.Add(neuron.delta * warstwapreview.Neurons[x].value);
+                    }
+
+                }
+
+
+            }
+            
+
+            //Aktualizacja wag
+            foreach(var WarstwaSingle in Warstwa)
+            {
+                foreach(var neuron in WarstwaSingle.Neurons)
+                {
+                    for(int i = 0; i < neuron.wagi.Count;i++)
+                    {
+                        neuron.wagi[i] += neuron.deltavalue[i];
+                    }
+                    //Akutalizacja bias
+                    neuron.extranumber += neuron.delta;
                 }
             }
+
         }
-
-        //Console.WriteLine("PO UCZENIU!");
-        //this.CheckError(probki);
-
     }
 
+    public bool TrainMore(List<List<double>> probki)
+    {
+        var errors = CheckError(probki);
+        //Metoda odpowiada za sprawdzenie 
+        foreach (var error in errors)
+        {
+            if (error >= 0.3)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 
@@ -235,16 +269,34 @@ class Program
         };
 
 
+        //DEBUG WARTOSCI BNOWAK WYKLAD
+        /*
+        test.Warstwa[1].Neurons[0].wagi = new List<double> { 0.1, 0.2 };
+        test.Warstwa[1].Neurons[1].wagi = new List<double> { 0.4, 0.5 };
+        test.Warstwa[2].Neurons[0].wagi = new List<double> { 0.7,-0.8};
+        test.Warstwa[1].Neurons[0].extranumber = 0.3;
+        test.Warstwa[1].Neurons[1].extranumber = 0.6;
+        test.Warstwa[2].Neurons[0].extranumber = 0.9;
+        */
+        Console.WriteLine("###PRZED UCZENIEM###");
+        test.CheckError(probki,1);
 
 
-        for (int i = 0; i < 100000; i++)
+        
+        for (int i = 0; i < 1000000; i++)
         {
-            //Console.WriteLine("ITERACJA nr.{0}", i);
             test.TrainNetwork(probki);
-        }
+            var trainmore = test.TrainMore(probki);
+            if (trainmore == false)
+            {
+                Console.WriteLine("Siec nauczyła sie wczesniej iteracja: {0}", i + 1);
+                break;
+            }
 
-        test.TrainNetwork(probki);
-        test.CheckError(probki);
+        }
+        Console.WriteLine("###PO UCZENIU###");
+        test.CheckError(probki,1);
+
 
     }
 }
