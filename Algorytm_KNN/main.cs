@@ -3,6 +3,7 @@ namespace KNN
     class Objectknn{
         public List<List<double>> Param = new();
         public string Idklasa = "";
+        double distance = 0;
         public Objectknn()
         {
             Param = new();
