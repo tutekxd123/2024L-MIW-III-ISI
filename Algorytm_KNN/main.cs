@@ -1,15 +1,16 @@
 namespace KNN
 {
     class Objectknn{
-        public List<double> Param = new();
+        public List<List<double>> Param = new();
         public string Idklasa = "";
         public Objectknn()
         {
-            Param = new List<double>();
+            Param = new();
             Idklasa = "";
         }
         public void NormalizeData()
         {
+            //calc Wzor
             foreach(var param in Param)
             {
                 
@@ -23,7 +24,7 @@ namespace KNN
         {
             return "";
         }
-        public double GetDistanceEukl()
+        public double GetDistanceEukl(List<double>Param)
         {
             return 0;
         }
