@@ -1,9 +1,13 @@
 namespace KNN
 {
+    class Params{
+        public List<double> Param = new();
+        public string Idklasa = "";
+
+    }
     class Objectknn{
         public List<List<double>> Param = new();
         public string Idklasa = "";
-        double distance = 0;
         public Objectknn()
         {
             Param = new();
@@ -17,21 +21,33 @@ namespace KNN
                 
             }
         }
-        public void LoadDataFromString()
+        public static void LoadDataFromString(string data)
         {
+            
             //Wczytanie Pliku
         }
-        public string getClass()
+        public static string getClass()
         {
             return "";
         }
-        public double GetDistanceEukl(List<double>Param)
+        public static double GetDistanceEukl(List<double>Param1,List<double>otherparam)
         {
-            return 0;
+            double result = 0;
+            for(int i = 0; i < otherparam.Count(); i++)
+            {
+                result += Math.Pow(otherparam[i] - Param1[i], 2);
+            }
+            result = Math.Sqrt(result);
+            return result;
         }
-        public double GetDistanceManhattan()
+        public static double GetDistanceManhattan(List<double> Param1, List<double> otherparam)
         {
-            return 0;
+            double result = 0;
+            for (int i = 0; i < otherparam.Count(); i++)
+            {
+                result += Math.Abs(otherparam[i] - Param1[i]);
+            }
+            return result;
         }
 
     }
