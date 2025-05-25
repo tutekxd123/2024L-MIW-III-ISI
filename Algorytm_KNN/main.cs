@@ -1,23 +1,84 @@
-using Klasyfikator_k_nn;
-
 namespace KNN
 {
-    class Params
+    public class Obj
     {
         public List<double> Param = new();
         public string Idklasa = "";
-        public Params(List<double> param, string idklasa)
+        public Obj(List<double>listparm,string idclass)
         {
-            Param = param;
-            Idklasa = idklasa;
+            this.Param = listparm;
+            this.Idklasa = idclass;
         }
     }
-    class Objectknn
+
+    public class Metrics
     {
-        public List<Params> Params = new List<Params>();
-        public Objectknn()
+        public delegate double DistanceMetrics(Obj A, Obj B, object param = null);
+
+        public static double GetDistanceEukl(Obj A, Obj B, object param = null)
         {
-            Params = new();
+            double result = 0;
+            for (int i = 0; i <A.Param.Count; i++)
+            {
+                result += Math.Pow(A.Param[i] - B.Param[i], 2);
+            }
+            result = Math.Sqrt(result);            
+            return result;
+        }
+
+        public static double GetDistanceCzebyszewa(Obj A, Obj B, object param = null)
+        {
+            if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutów");
+            double result = 0;
+
+           return result;
+        }
+        //public double GetDistanceByLog(Params otherParam)
+        //{
+        //    if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutów");
+        //    double result = 0;
+        //    for (int i = 0; i < this.Param.Count(); i++)
+        //    {
+        //        result += Math.Log(Math.Abs(this.Param[i] - otherParam.Param[i]));
+        //    }
+        //    this.distance = result;
+        //    return result;
+        //}
+        //public double GetDistanceMinkowskiego(Params otherParam, int parametr)
+        //{
+        //    if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutów");
+        //    double result = 0;
+        //    for (int i = 0; i < this.Param.Count(); i++)
+        //    {
+        //        result += Math.Pow(Math.Abs(this.Param[i] - otherParam.Param[i]), parametr);
+        //    }
+        //    result = Math.Pow(result, 1 / parametr);
+        //    this.distance = result;
+        //    return result;
+        //}
+        //public double GetDistanceManhattan(Params otherParam)
+        //{
+        //   if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutów");
+        //    double result = 0;
+        //    for (int i = 0; i < this.Param.Count(); i++)
+        //    {
+        //        result += Math.Abs(this.Param[i] - otherParam.Param[i]);
+        //    }
+        //    this.distance = result;
+        //    return result;
+        //}
+    }
+
+
+
+
+    class Objectknn{
+        public List<Obj> BaseData = new List<Obj>();
+        public int kparametr = 0;
+        public Objectknn(int kparametr)
+        {
+            this.Params = new();
+            this.kparametr = kparametr;
         }
         public void TestOwnKNN()
         {
@@ -44,7 +105,7 @@ namespace KNN
                         minValues[j] = Params[i].Param[j];
                     }
 
-                    if (maxValues[j] < Params[i].Param[j])
+                    if (maxValues[j] > Params[i].Param[j])
                     {
                         maxValues[j] = Params[i].Param[j];
                     }
@@ -66,46 +127,40 @@ namespace KNN
             var lines = data.Split('\n');
             foreach (var line in lines)
             {
-                List<double>dataline = new List<double>();
+                List<double> dataline = new List<double>();
                 string idclass = "";
                 try
                 {
                     var arraylines = line.Split(' ').ToList();
                     arraylines = arraylines.Select(x => x.Replace('.', ',')).ToList();
-                    dataline = arraylines.Slice(0,arraylines.Count()-1).Select(x=>double.Parse(x)).ToList();
-                    idclass = arraylines.Last().Replace("\r","");
+                    dataline = arraylines.Slice(0, arraylines.Count() - 1).Select(x => double.Parse(x)).ToList();
+                    idclass = arraylines.Last().Replace("\r", "");
                 }
                 catch
                 {
                     throw new Exception("Nieprawidłowe Dane wejściowe!");
                 }
-                Params.Add(new Params(dataline, idclass));
+                BaseData.Add(new Obj());
             }
         }
-        public static string getClass(Params other,int optioncalc=0)
+        public string GetClass(Obj other)
         {
+            var methods = typeof(Metrics).GetMethods().Where(m => m.ReturnType == typeof(double) && m.GetParameters().Length == 3 && m.GetParameters()[0].ParameterType == typeof(Obj));
+            //var decyzja = Klasyfikuj(asdfa, asdfad, 5, Metrics.GetDistanceEukl);
+        }
 
-            return "";
-        }
-        public static double GetDistanceEukl(List<double> Param1, List<double> otherparam)
+
+        public double Klasyfikuj(Obj[] bazaWiedzy, Obj obiekt, int k, Metrics.DistanceMetrics m)
         {
-            double result = 0;
-            for (int i = 0; i < otherparam.Count(); i++)
-            {
-                result += Math.Pow(otherparam[i] - Param1[i], 2);
-            }
-            result = Math.Sqrt(result);
-            return result;
+            // Napisac algorytm Knn, gdzie m używamy jak metryki np. Euklidesowej
+
+
+            var wynik = m(bazaWiedzy[0], obiekt);
+
+
+
         }
-        public static double GetDistanceManhattan(List<double> Param1, List<double> otherparam)
-        {
-            double result = 0;
-            for (int i = 0; i < otherparam.Count(); i++)
-            {
-                result += Math.Abs(otherparam[i] - Param1[i]);
-            }
-            return result;
-        }
+
 
     }
     internal static class Program
