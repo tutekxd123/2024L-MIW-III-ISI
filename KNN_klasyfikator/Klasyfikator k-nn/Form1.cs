@@ -23,7 +23,7 @@ namespace Klasyfikator_k_nn
             knn.LoadDataFromString(textBox1.Text);
             if (knn.BaseData.Count <= 0)
             {
-                MessageBox.Show("Brak próbek");
+                MessageBox.Show("Brak prÃ³bek");
                 return null;
             }
             knn.NormalizeData();
@@ -49,21 +49,21 @@ namespace Klasyfikator_k_nn
             var knn = this.LoadKnn();
             if (stringobj == "")
             {
-                MessageBox.Show("Brak Podanej Próbki do klasyfikacji");
+                MessageBox.Show("Brak Podanej PrÃ³bki do klasyfikacji");
                 return;
             }
             var obj = new Obj(textBox2.Text, 0);
-            var SelectedMetric = comboBox1.SelectedValue as MethodInfo;
+            var SelectedMetric = comboBox1.SelectedItem as MethodInfo;
             if (SelectedMetric != null)
             {
                 var SelectedMethod = Delegate.CreateDelegate(typeof(Metrics.DistanceMetrics), SelectedMetric) as Metrics.DistanceMetrics;
 
                 var result = knn.Klasyfikuj(obj, SelectedMethod);
-                MessageBox.Show($"Próbka nale¿y do: {result}");
+                MessageBox.Show($"PrÃ³bka naleÂ¿y do: {result}");
             }
             else
             {
-                MessageBox.Show("Z³a metryka");
+                MessageBox.Show("ZÂ³a metryka");
             }
 
         }
