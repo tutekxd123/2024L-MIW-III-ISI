@@ -33,7 +33,7 @@ namespace KNN
             }
             catch
             {
-                throw new Exception("Wystapi³ blad z parsowaniem obj");
+                throw new Exception("WystapiÂ³ blad z parsowaniem obj");
             }
         }
     }
@@ -44,6 +44,7 @@ namespace KNN
 
         public static double GetDistanceEukl(Obj A, Obj B, double param = 1)
         {
+             if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutÃ³w");
             double result = 0;
             for (int i = 0; i < A.Param.Count; i++)
             {
@@ -55,7 +56,7 @@ namespace KNN
 
         public static double GetDistanceCzebyszewa(Obj A, Obj B, double param = 1)
         {
-            if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutów");
+            if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutÃ³w");
             double result = 0;
             for (int i = 0; i < A.Param.Count; i++)
             {
@@ -69,7 +70,7 @@ namespace KNN
         }
         public static double GetDistanceByLog(Obj A, Obj B, double param = 1)
         {
-            if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutów");
+            if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutÃ³w");
             double result = 0;
             for (int i = 0; i < A.Param.Count(); i++)
             {
@@ -79,7 +80,7 @@ namespace KNN
         }
         public static double GetDistanceMinkowskiego(Obj A, Obj B, double param = 1)
         {
-            if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutów");
+            if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutÃ³w");
             double result = 0;
             for (int i = 0; i < A.Param.Count(); i++)
             {
@@ -90,7 +91,7 @@ namespace KNN
         }
         public static double GetDistanceManhattan(Obj A, Obj B, double param = 1)
         {
-           if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutów");
+           if (A.Param.Count != B.Param.Count) throw new Exception("Parametry musza miec tyle samo atrybutÃ³w");
             double result = 0;
             for (int i = 0; i < A.Param.Count; i++)
             {
@@ -197,7 +198,7 @@ namespace KNN
                 }
                 catch
                 {
-                    throw new Exception("Nieprawid³owe Dane wejœciowe!");
+                    throw new Exception("NieprawidÂ³owe Dane wejÅ“ciowe!");
                 }
                 
             }
@@ -206,7 +207,7 @@ namespace KNN
         public string Klasyfikuj(Obj obiekt, Metrics.DistanceMetrics m,double parametr=1)
         {
 
-            // Napisac algorytm Knn, gdzie m u¿ywamy jak metryki np. Euklidesowej
+            // Napisac algorytm Knn, gdzie m uÂ¿ywamy jak metryki np. Euklidesowej
             distances.Clear();
             for(int i = 0; i < this.BaseData.Count; i++)
             {
@@ -220,7 +221,7 @@ namespace KNN
             }
             if (result[0].Sum != result[1].Sum)
             {
-                return result[0].IdClass; //Jezeli nie s¹ takie same przypadkiem
+                return result[0].IdClass; //Jezeli nie sÂ¹ takie same przypadkiem
             }
             else
             {
